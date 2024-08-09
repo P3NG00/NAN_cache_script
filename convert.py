@@ -16,7 +16,9 @@ char_mapping = {
 if len(sys.argv) != 2:
     print("Usage: python convert.py <gc code>")
     sys.exit(1)
+# get gc code
 gc = sys.argv[1]
+# create browser
 driver_options = webdriver.EdgeOptions()
 driver_options.add_argument("headless")
 driver_options.add_argument("disable-gpu")
@@ -25,22 +27,18 @@ driver = webdriver.Edge(driver_options)
 
 try:
     driver.get("https://www.geocaching.com/geocache/" + gc)
-    # get cache title
     cache_title = driver.find_element(By.XPATH, '//*[@id="ctl00_ContentBody_CacheName"]').text[4:]
     if len(cache_title) > 12:
         cache_title = cache_title[:12]
     # convert title to code
     code = ""
     for c in cache_title:
-        if c in char_mapping:
-            code += char_mapping[c]
-        else:
-            code += c
+        code += char_mapping[c] if c in char_mapping else c
     # get secret from gc
     secret = []
     for element in driver.find_element(By.XPATH, '//*[@id="ctl00_ContentBody_LongDescription"]').find_elements(By.TAG_NAME, "img"):
         secret.append(element.get_attribute("src")[28:30])
-    # begin translation at witzabout website
+    # get table from witzabout using code to create translation values
     driver.get("https://witzabout.com/NAN/")
     driver.find_element(By.XPATH, "/html/body/form/input").send_keys(code + Keys.RETURN)
     table_rows = driver.find_element(By.XPATH, "/html/body/table/tbody").find_elements(By.TAG_NAME, "tr")
@@ -58,7 +56,7 @@ try:
             for i in range(1, 8):
                 id = cols[i].find_element(By.TAG_NAME, "img").get_attribute("src")[33:35]
                 translation_values[id] = header_values[i] + num
-    # iterate over secret and get translation
+    # use translation values to convert secret to numbers
     translation = ""
     for c in secret:
         translation += str(translation_values[c])
