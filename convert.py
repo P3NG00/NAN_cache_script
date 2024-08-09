@@ -2,7 +2,6 @@ from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
 import sys
-import time
 
 
 url = "https://witzabout.com/NAN/"
@@ -16,11 +15,14 @@ char_mapping = {
 }
 
 
+if len(sys.argv) != 12:
+    print("Usage: python convert.py <input_string> <5x2char code>")
+    sys.exit(1)
+
 # get input string
-if (len(sys.argv) > 1):
-    input_string = sys.argv[1]
-else:
-    input_string = input("Enter a string to convert: ")
+input_string = sys.argv[1]
+# get code
+code = sys.argv[2:]
 
 # convert input to output
 output_string = ""
@@ -29,11 +31,10 @@ for c in input_string:
         output_string += char_mapping[c]
     else:
         output_string += c
-print(output_string)
 
 # use output in selenium
 driver_options = webdriver.EdgeOptions()
-# driver_options.add_argument("headless")  # TODO uncomment later
+driver_options.add_argument("headless")
 driver_options.add_argument("disable-gpu")
 driver_options.add_argument("log-level=3")
 driver = webdriver.Edge(driver_options)
@@ -47,11 +48,35 @@ try:
     text_box.send_keys(Keys.RETURN)
 
     # read table
-    table = driver.find_element(By.XPATH, "/html/body/table")
-    # TODO traverse table to get data
+    table = driver.find_element(By.XPATH, "/html/body/table/tbody")
+    table_rows = table.find_elements(By.TAG_NAME, "tr")
+    header_values = [ None ]
+    translation_values = {}
+    for row in table_rows:
+        cols = row.find_elements(By.TAG_NAME, "td")
+        # first row
+        if row == table_rows[0]:
+            for i in range(1, 8):
+                header_values.append(int(cols[i].text))
+        # all subsequent rows
+        else:
+            num = int(cols[0].text)
+            for i in range(1, 8):
+                # TODO chop up into identifiable part
+                id = cols[i].find_element(By.TAG_NAME, "img").get_attribute("src")[33:35]
+                translation_values[id] = header_values[i] + num
 
-# TODO uncomment later
-# except:
-#     print("Error: Could not open the website")
+    # iterate over code and get translation
+    translation = ""
+    for c in code:
+        translation += str(translation_values[c])
+    
+    # print output
+    print("Code: " + output_string)
+    print(translation)
+    print(f"{translation[0:2]}.{translation[2:5]} & {translation[5:7]}.{translation[7:10]}")
+
+except:
+    print("Error!")
 finally:
     driver.quit()
