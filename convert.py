@@ -33,7 +33,6 @@ driver = webdriver.Edge(driver_options)
 try:
     # go to geocache page
     driver.get(url_gc + gc)
-
     # get cache title
     cache_title = driver.find_element(By.XPATH, '//*[@id="ctl00_ContentBody_CacheName"]').text[4:]
     if len(cache_title) > 12:
@@ -45,24 +44,16 @@ try:
             output_string += char_mapping[c]
         else:
             output_string += c
-    
-    # get secret from gc
-    secret_span = driver.find_element(By.XPATH, '//*[@id="ctl00_ContentBody_LongDescription"]')
-    secrets = secret_span.find_elements(By.TAG_NAME, "img")
+    # get code from gc
     code = []
-    for secret in secrets:
+    for secret in driver.find_element(By.XPATH, '//*[@id="ctl00_ContentBody_LongDescription"]').find_elements(By.TAG_NAME, "img"):
         code.append(secret.get_attribute("src")[28:30])
-
     # go to site
     driver.get(url)
     # input code
-    text_box = driver.find_element(By.XPATH, "/html/body/form/input")
-    text_box.send_keys(output_string)
-    text_box.send_keys(Keys.RETURN)
-
+    driver.find_element(By.XPATH, "/html/body/form/input").send_keys(output_string + Keys.RETURN)
     # read table
-    table = driver.find_element(By.XPATH, "/html/body/table/tbody")
-    table_rows = table.find_elements(By.TAG_NAME, "tr")
+    table_rows = driver.find_element(By.XPATH, "/html/body/table/tbody").find_elements(By.TAG_NAME, "tr")
     header_values = [ None ]
     translation_values = {}
     for row in table_rows:
@@ -77,17 +68,14 @@ try:
             for i in range(1, 8):
                 id = cols[i].find_element(By.TAG_NAME, "img").get_attribute("src")[33:35]
                 translation_values[id] = header_values[i] + num
-
     # iterate over code and get translation
     translation = ""
     for c in code:
         translation += str(translation_values[c])
-    
     # print output
     print("Code: " + output_string)
     print(translation)
     print(f"{translation[0:2]}.{translation[2:5]} & {translation[5:7]}.{translation[7:10]}")
-
 except:
     print("Error!")
 finally:
