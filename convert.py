@@ -4,6 +4,7 @@ from selenium.webdriver.common.by import By
 import sys
 
 
+url_gc = "https://www.geocaching.com/geocache/"
 url = "https://witzabout.com/NAN/"
 char_mapping = {
     "A": "1", "B": "2", "C": "3", "D": "4", "E": "5", "F": "6", "G": "7", "H": "8", "I": "9",
@@ -15,22 +16,12 @@ char_mapping = {
 }
 
 
-if len(sys.argv) != 12:
-    print("Usage: python convert.py <input_string> <5x2char code>")
+if len(sys.argv) != 2:
+    print("Usage: python convert.py <gc code>")
     sys.exit(1)
 
 # get input string
-input_string = sys.argv[1]
-# get code
-code = sys.argv[2:]
-
-# convert input to output
-output_string = ""
-for c in input_string:
-    if c in char_mapping:
-        output_string += char_mapping[c]
-    else:
-        output_string += c
+gc = sys.argv[1]
 
 # use output in selenium
 driver_options = webdriver.EdgeOptions()
@@ -40,6 +31,28 @@ driver_options.add_argument("log-level=3")
 driver = webdriver.Edge(driver_options)
 
 try:
+    # go to geocache page
+    driver.get(url_gc + gc)
+
+    # get cache title
+    cache_title = driver.find_element(By.XPATH, '//*[@id="ctl00_ContentBody_CacheName"]').text[4:]
+    if len(cache_title) > 12:
+        cache_title = cache_title[:12]
+    # convert title to code
+    output_string = ""
+    for c in cache_title:
+        if c in char_mapping:
+            output_string += char_mapping[c]
+        else:
+            output_string += c
+    
+    # get secret from gc
+    secret_span = driver.find_element(By.XPATH, '//*[@id="ctl00_ContentBody_LongDescription"]')
+    secrets = secret_span.find_elements(By.TAG_NAME, "img")
+    code = []
+    for secret in secrets:
+        code.append(secret.get_attribute("src")[28:30])
+
     # go to site
     driver.get(url)
     # input code
@@ -62,7 +75,6 @@ try:
         else:
             num = int(cols[0].text)
             for i in range(1, 8):
-                # TODO chop up into identifiable part
                 id = cols[i].find_element(By.TAG_NAME, "img").get_attribute("src")[33:35]
                 translation_values[id] = header_values[i] + num
 
