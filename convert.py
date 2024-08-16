@@ -24,16 +24,27 @@ driver_options.add_argument("headless")
 driver_options.add_argument("disable-gpu")
 driver_options.add_argument("log-level=3")
 driver = webdriver.Edge(driver_options)
+print("\nStarting...")
+
+exception_nan = Exception("Error: Not a NAN cache!")
 
 try:
     driver.get("https://www.geocaching.com/geocache/" + gc)
-    cache_title = driver.find_element(By.XPATH, '//*[@id="ctl00_ContentBody_CacheName"]').text[4:]
+    try:
+        cache_title = driver.find_element(By.XPATH, '//*[@id="ctl00_ContentBody_CacheName"]').text
+    except:
+        raise exception_nan
+    # check cache title
+    if cache_title[:4] == "NAN ":
+        cache_title = cache_title[4:]
+    else:
+        raise exception_nan
+    # convert title to code
     if len(cache_title) > 12:
         cache_title = cache_title[:12]
-    # convert title to code
     code = ""
     for c in cache_title:
-        code += char_mapping[c] if c in char_mapping else c
+        code += char_mapping[c]
     # get secret from gc
     secret = []
     for element in driver.find_element(By.XPATH, '//*[@id="ctl00_ContentBody_LongDescription"]').find_elements(By.TAG_NAME, "img"):
@@ -64,7 +75,7 @@ try:
     print("Code: " + code)
     print(translation)
     print(f"{translation[0:2]}.{translation[2:5]} & {translation[5:7]}.{translation[7:10]}")
-except:
-    print("Error!")
+except Exception as e:
+    print(e)
 finally:
     driver.quit()
