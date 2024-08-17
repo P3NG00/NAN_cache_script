@@ -26,19 +26,17 @@ driver_options.add_argument("log-level=3")
 driver = webdriver.Edge(driver_options)
 print("\nStarting...")
 
-exception_nan = Exception("Error: Not a NAN cache!")
-
 try:
     driver.get("https://www.geocaching.com/geocache/" + gc)
     try:
         cache_title = driver.find_element(By.XPATH, '//*[@id="ctl00_ContentBody_CacheName"]').text
     except:
-        raise exception_nan
+        raise Exception("Trouble retrieving cache title!")
     # check cache title
     if cache_title[:4] == "NAN ":
         cache_title = cache_title[4:]
     else:
-        raise exception_nan
+        raise Exception("Error: Not a NAN cache!")
     # convert title to code
     if len(cache_title) > 12:
         cache_title = cache_title[:12]
