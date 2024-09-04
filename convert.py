@@ -40,7 +40,7 @@ try:
             raise Exception("Trouble retrieving cache title! (Invalid GC code?)")
         # check cache title
         if cache_title[:4] == "NAN ":
-            print(f"Solving: {cache_title}")
+            print(f"\nSolving: {cache_title}")
             cache_title = cache_title[4:]
         else:
             raise Exception("Error: Not a NAN cache!")
@@ -86,6 +86,7 @@ try:
         # print output
         # TODO get beginning coordinates from GC then replace with translated ends to print completed coordinates
         print(f"Coordinate Ends: {translation[0:2]}.{translation[2:5]} & {translation[5:7]}.{translation[7:10]}")
+    print("\nDone!")
 except Exception as e:
     print(f"\n UNEXPECTED ERROR: {e}")
 finally:
